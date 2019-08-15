@@ -126,7 +126,13 @@ public abstract class SettingsBase {
                 }
 
                 final GetSettingFunc<Object> getterFunction = settingsGetterMap.get(type);
-                final Object settingsValue = convertBackFunction.apply(getterFunction.get(preferences, key, typedDefaultValue));
+                Object value = getterFunction.get(preferences, key, typedDefaultValue);
+
+                if (value == null) {
+                    value = getDefaultValue(fieldType);
+                }
+
+                final Object settingsValue = convertBackFunction.apply(value);
                 try {
                     field.set(this, settingsValue);
                 } catch (IllegalAccessException e) {
@@ -163,7 +169,7 @@ public abstract class SettingsBase {
         builtInMap.put("long", Long.class);
         builtInMap.put("double", Double.class);
         builtInMap.put("float", Float.class);
-        builtInMap.put("bool", Boolean.class);
+        builtInMap.put("boolean", Boolean.class);
         builtInMap.put("byte", Byte.class);
         builtInMap.put("void", Void.class);
         builtInMap.put("short", Short.class);
