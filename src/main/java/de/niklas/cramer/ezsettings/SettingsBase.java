@@ -12,20 +12,18 @@ import java.util.Map;
 import java.util.function.Function;
 
 public abstract class SettingsBase {
-    private Context context;
     private static Map<SettingsType, GetSettingFunc<Object>> settingsGetterMap = new HashMap<>();
     private static Map<SettingsType, SetSettingAction<Object>> settingsSetterMap = new HashMap<>();
     private SharedPreferences preferences;
 
     protected SettingsBase(final Context context) {
-        this.context = context;
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        readSettings(preferences);
+        init(preferences);
     }
 
     protected SettingsBase(final String preferencesName, final Context context) {
         preferences = context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE);
-        readSettings(preferences);
+        init(preferences);
     }
 
     static {
@@ -99,7 +97,7 @@ public abstract class SettingsBase {
         return Arrays.stream(Converter.values()).filter(x -> x.getFieldType() == objectType).findFirst().orElse(Converter.None);
     }
 
-    void readSettings(final SharedPreferences preferences) {
+    void init(final SharedPreferences preferences) {
         List<Field> fields = ReflectionUtils.getAllFieldsWithAnnotation(getClass(), Preference.class);
 
         for (Field field : fields) {
