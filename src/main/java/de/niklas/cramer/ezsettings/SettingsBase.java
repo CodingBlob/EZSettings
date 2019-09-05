@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,16 +15,16 @@ import java.util.function.Function;
 public abstract class SettingsBase {
     private static Map<SettingsType, GetSettingFunc<Object>> settingsGetterMap = new HashMap<>();
     private static Map<SettingsType, SetSettingAction<Object>> settingsSetterMap = new HashMap<>();
-    private SharedPreferences preferences;
+    private WeakReference<SharedPreferences> preferences;
 
     protected SettingsBase(final Context context) {
-        preferences = PreferenceManager.getDefaultSharedPreferences(context);
-        init(preferences);
+        preferences = new WeakReference<>(PreferenceManager.getDefaultSharedPreferences(context));
+        init(preferences.get());
     }
 
     protected SettingsBase(final String preferencesName, final Context context) {
-        preferences = context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE);
-        init(preferences);
+        preferences = new WeakReference<>(context.getSharedPreferences(preferencesName, Context.MODE_PRIVATE));
+        init(preferences.get());
     }
 
     static {
@@ -59,7 +60,7 @@ public abstract class SettingsBase {
     }
 
     public void save() {
-        SharedPreferences.Editor edit = preferences.edit();
+        SharedPreferences.Editor edit = preferences.get().edit();
 
         for (Field field : ReflectionUtils.getAllFieldsWithAnnotation(getClass(), Preference.class)) {
             final Preference annotation = field.getAnnotation(Preference.class);
@@ -97,7 +98,7 @@ public abstract class SettingsBase {
         return Arrays.stream(Converter.values()).filter(x -> x.getFieldType() == objectType).findFirst().orElse(Converter.None);
     }
 
-    void init(final SharedPreferences preferences) {
+    private void init(final SharedPreferences preferences) {
         List<Field> fields = ReflectionUtils.getAllFieldsWithAnnotation(getClass(), Preference.class);
 
         for (Field field : fields) {
